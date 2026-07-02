@@ -1,0 +1,1104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ThyroAI — Thyroid Cancer Prediction System</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:         #0a0e17;
+    --surface:    #111827;
+    --card:       #151d2e;
+    --border:     #1e2d45;
+    --accent:     #00d4aa;
+    --accent2:    #4f8ef7;
+    --warn:       #ff6b6b;
+    --text:       #e8edf5;
+    --muted:      #6b7a96;
+    --label:      #9ba8c0;
+    --font-serif: 'DM Serif Display', Georgia, serif;
+    --font-body:  'Outfit', sans-serif;
+    --font-mono:  'DM Mono', monospace;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 15px;
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+
+  /* ── Grid background ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image:
+      linear-gradient(rgba(0,212,170,.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,170,.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── Header ── */
+  header {
+    position: relative; z-index: 10;
+    padding: 28px 48px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 16px;
+    background: rgba(10,14,23,.9);
+    backdrop-filter: blur(12px);
+  }
+
+  .logo-mark {
+    width: 40px; height: 40px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-serif);
+    font-size: 20px; font-weight: 700; color: #0a0e17;
+  }
+
+  .brand h1 {
+    font-family: var(--font-serif);
+    font-size: 22px; font-weight: 400;
+    letter-spacing: .5px;
+  }
+
+  .brand p {
+    font-size: 11px; color: var(--muted);
+    font-family: var(--font-mono);
+    letter-spacing: 1.5px; text-transform: uppercase;
+  }
+
+  .status-badge {
+    margin-left: auto;
+    display: flex; align-items: center; gap: 7px;
+    font-size: 11px; font-family: var(--font-mono);
+    color: var(--accent); letter-spacing: 1px;
+  }
+  .status-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--accent);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(0,212,170,.4); }
+    50% { opacity: .7; box-shadow: 0 0 0 5px rgba(0,212,170,0); }
+  }
+
+  /* ── Layout ── */
+  main {
+    position: relative; z-index: 1;
+    max-width: 1120px; margin: 0 auto;
+    padding: 40px 24px 80px;
+  }
+
+  /* ── Module tabs ── */
+  .tab-bar {
+    display: flex; gap: 4px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 5px;
+    margin-bottom: 36px;
+  }
+
+  .tab {
+    flex: 1; padding: 12px 20px;
+    border: none; border-radius: 10px;
+    background: transparent;
+    color: var(--muted);
+    font-family: var(--font-body);
+    font-size: 13px; font-weight: 500;
+    cursor: pointer;
+    transition: all .2s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+
+  .tab.active {
+    background: var(--card);
+    color: var(--text);
+    box-shadow: 0 1px 6px rgba(0,0,0,.4);
+  }
+
+  .tab:hover:not(.active) { color: var(--text); }
+
+  .tab-num {
+    width: 20px; height: 20px; border-radius: 50%;
+    background: var(--border);
+    font-size: 10px; font-family: var(--font-mono);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .tab.active .tab-num {
+    background: var(--accent);
+    color: #0a0e17;
+  }
+
+  /* ── Cards ── */
+  .panel { display: none; }
+  .panel.active { display: block; animation: fadeIn .3s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px;
+    margin-bottom: 24px;
+  }
+
+  .card-title {
+    font-family: var(--font-serif);
+    font-size: 20px; font-weight: 400;
+    margin-bottom: 6px;
+  }
+
+  .card-subtitle {
+    font-size: 12px; color: var(--muted);
+    font-family: var(--font-mono);
+    letter-spacing: .8px; text-transform: uppercase;
+    margin-bottom: 28px;
+  }
+
+  /* ── Form grid ── */
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 18px;
+  }
+
+  .form-group { display: flex; flex-direction: column; gap: 7px; }
+  .form-group.wide { grid-column: 1 / -1; }
+
+  label {
+    font-size: 11px; font-weight: 500;
+    color: var(--label);
+    letter-spacing: .8px; text-transform: uppercase;
+    font-family: var(--font-mono);
+  }
+
+  input[type="number"], select {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 14px;
+    padding: 10px 14px;
+    width: 100%;
+    transition: border-color .2s, box-shadow .2s;
+    outline: none;
+    -webkit-appearance: none;
+  }
+
+  input[type="number"]:focus, select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(0,212,170,.12);
+  }
+
+  select option { background: var(--surface); }
+
+  /* ── Range sliders ── */
+  .range-wrap { display: flex; align-items: center; gap: 12px; }
+
+  input[type="range"] {
+    flex: 1; height: 4px;
+    -webkit-appearance: none;
+    background: var(--border);
+    border-radius: 2px;
+    outline: none;
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    box-shadow: 0 0 0 3px rgba(0,212,170,.2);
+  }
+
+  .range-val {
+    font-family: var(--font-mono);
+    font-size: 13px; color: var(--accent);
+    min-width: 36px; text-align: right;
+  }
+
+  /* ── Toggle buttons ── */
+  .toggle-group { display: flex; gap: 6px; }
+
+  .toggle-btn {
+    flex: 1; padding: 9px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+    color: var(--muted);
+    font-size: 13px; cursor: pointer;
+    transition: all .15s;
+    font-family: var(--font-body);
+  }
+
+  .toggle-btn.active {
+    border-color: var(--accent);
+    background: rgba(0,212,170,.1);
+    color: var(--accent);
+  }
+
+  /* ── Submit button ── */
+  .submit-btn {
+    width: 100%; padding: 15px;
+    background: linear-gradient(135deg, var(--accent), #00b894);
+    border: none; border-radius: 12px;
+    color: #0a0e17;
+    font-family: var(--font-body);
+    font-size: 15px; font-weight: 600;
+    cursor: pointer;
+    margin-top: 28px;
+    transition: all .2s;
+    letter-spacing: .3px;
+  }
+
+  .submit-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(0,212,170,.25); }
+  .submit-btn:active { transform: translateY(0); }
+  .submit-btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+  /* ── Results ── */
+  .result-card {
+    display: none;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px;
+    margin-top: 20px;
+    animation: fadeIn .4s ease;
+  }
+
+  .result-card.show { display: block; }
+
+  .result-header {
+    display: flex; align-items: center; gap: 16px;
+    margin-bottom: 28px;
+  }
+
+  .result-icon {
+    width: 52px; height: 52px; border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px;
+    flex-shrink: 0;
+  }
+
+  .result-icon.benign   { background: rgba(0,212,170,.15); }
+  .result-icon.malignant{ background: rgba(255,107,107,.15); }
+  .result-icon.stage    { background: rgba(79,142,247,.15); }
+  .result-icon.meta     { background: rgba(255,167,0,.15); }
+
+  .result-label {
+    font-family: var(--font-serif);
+    font-size: 28px; font-weight: 400;
+  }
+
+  .result-label.benign    { color: var(--accent); }
+  .result-label.malignant { color: var(--warn); }
+  .result-label.stage     { color: var(--accent2); }
+  .result-label.no-meta   { color: var(--accent); }
+  .result-label.has-meta  { color: #ffa700; }
+
+  .result-sub {
+    font-size: 12px; color: var(--muted);
+    font-family: var(--font-mono);
+    text-transform: uppercase; letter-spacing: 1px;
+    margin-top: 3px;
+  }
+
+  /* ── Confidence bar ── */
+  .conf-row { margin-bottom: 20px; }
+  .conf-label { font-size: 11px; color: var(--label); font-family: var(--font-mono); text-transform: uppercase; letter-spacing:.8px; margin-bottom: 8px; }
+  .conf-bar-wrap { background: var(--surface); border-radius: 100px; height: 8px; overflow: hidden; }
+  .conf-bar { height: 100%; border-radius: 100px; transition: width .8s cubic-bezier(.4,0,.2,1); }
+  .conf-bar.high { background: linear-gradient(90deg, var(--accent), #00b894); }
+  .conf-bar.mid  { background: linear-gradient(90deg, var(--accent2), #7c6ef5); }
+  .conf-bar.low  { background: linear-gradient(90deg, #ffa700, var(--warn)); }
+  .conf-pct { font-family: var(--font-mono); font-size: 13px; color: var(--text); margin-top: 6px; }
+
+  /* ── Prob grid ── */
+  .prob-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px; }
+  .prob-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px; padding: 14px;
+  }
+  .prob-key { font-size: 11px; color: var(--muted); font-family: var(--font-mono); text-transform: uppercase; margin-bottom: 4px; }
+  .prob-val { font-family: var(--font-mono); font-size: 18px; color: var(--text); }
+
+  /* ── Stage pills ── */
+  .stage-pills { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
+  .stage-pill {
+    padding: 6px 14px; border-radius: 100px;
+    font-family: var(--font-mono); font-size: 12px;
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--muted);
+  }
+  .stage-pill.active-stage {
+    background: rgba(79,142,247,.15);
+    border-color: var(--accent2);
+    color: var(--accent2);
+  }
+
+  /* ── Disclaimer ── */
+  .disclaimer {
+    margin-top: 40px;
+    padding: 16px 20px;
+    background: rgba(255,107,107,.06);
+    border: 1px solid rgba(255,107,107,.2);
+    border-radius: 10px;
+    font-size: 12px; color: var(--muted);
+    line-height: 1.7;
+  }
+
+  .disclaimer strong { color: var(--warn); }
+
+  /* ── Loading spinner ── */
+  .spinner {
+    display: inline-block; width: 16px; height: 16px;
+    border: 2px solid rgba(10,14,23,.5);
+    border-top-color: #0a0e17;
+    border-radius: 50%;
+    animation: spin .7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Error ── */
+  .error-banner {
+    display: none;
+    background: rgba(255,107,107,.08);
+    border: 1px solid rgba(255,107,107,.3);
+    border-radius: 10px;
+    padding: 14px 18px;
+    color: var(--warn);
+    font-size: 13px;
+    margin-top: 16px;
+  }
+  .error-banner.show { display: block; }
+
+  /* ── API info box ── */
+  .api-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    font-family: var(--font-mono);
+    font-size: 12px; color: var(--muted);
+    line-height: 1.8;
+  }
+  .api-box span { color: var(--accent); }
+
+  @media (max-width: 600px) {
+    header { padding: 16px 20px; }
+    main { padding: 24px 16px 60px; }
+    .card { padding: 20px; }
+    .tab { font-size: 11px; padding: 10px 8px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-mark">T</div>
+  <div class="brand">
+    <h1>ThyroAI</h1>
+    <p>Thyroid Cancer Prediction System</p>
+  </div>
+  <div class="status-badge">
+    <div class="status-dot" id="statusDot"></div>
+    <span id="statusText">Connecting…</span>
+  </div>
+</header>
+
+<main>
+
+  <div class="api-box">
+    API Base URL: <span id="apiBaseUrl">http://localhost:8000</span> &nbsp;|&nbsp;
+    Docs: <span><a href="/docs" target="_blank" style="color:var(--accent2);text-decoration:none;">/docs</a></span> &nbsp;|&nbsp;
+    Modules: <span>Detection · Staging · Metastasis</span>
+  </div>
+
+  <!-- Tab bar -->
+  <div class="tab-bar">
+    <button class="tab active" onclick="switchTab(0)">
+      <span class="tab-num">1</span> Detection
+    </button>
+    <button class="tab" onclick="switchTab(1)">
+      <span class="tab-num">2</span> Cancer Staging
+    </button>
+    <button class="tab" onclick="switchTab(2)">
+      <span class="tab-num">3</span> Metastasis
+    </button>
+  </div>
+
+  <!-- ══ MODULE 1 ══ -->
+  <div class="panel active" id="panel-0">
+    <div class="card">
+      <div class="card-title">Benign / Malignant Classification</div>
+      <div class="card-subtitle">Ultrasound features + lab biomarkers</div>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Age (years)</label>
+          <input type="number" id="d-age" value="45" min="0" max="120" step="1">
+        </div>
+        <div class="form-group">
+          <label>Gender</label>
+          <div class="toggle-group">
+            <button class="toggle-btn" onclick="setToggle('d-gender','F',this)">Female</button>
+            <button class="toggle-btn active" onclick="setToggle('d-gender','M',this)">Male</button>
+          </div>
+          <input type="hidden" id="d-gender" value="M">
+        </div>
+        <div class="form-group">
+          <label>Family History</label>
+          <div class="toggle-group">
+            <button class="toggle-btn active" onclick="setToggleNum('d-family',0,this)">No</button>
+            <button class="toggle-btn" onclick="setToggleNum('d-family',1,this)">Yes</button>
+          </div>
+          <input type="hidden" id="d-family" value="0">
+        </div>
+        <div class="form-group">
+          <label>Radiation Exposure</label>
+          <div class="toggle-group">
+            <button class="toggle-btn active" onclick="setToggleNum('d-rad',0,this)">No</button>
+            <button class="toggle-btn" onclick="setToggleNum('d-rad',1,this)">Yes</button>
+          </div>
+          <input type="hidden" id="d-rad" value="0">
+        </div>
+        <div class="form-group">
+          <label>Nodule Size (mm)</label>
+          <input type="number" id="d-nodule" value="18.5" min="0.1" max="200" step="0.1">
+        </div>
+        <div class="form-group">
+          <label>Calcification</label>
+          <div class="toggle-group">
+            <button class="toggle-btn active" onclick="setToggleNum('d-calc',0,this)">Absent</button>
+            <button class="toggle-btn" onclick="setToggleNum('d-calc',1,this)">Present</button>
+          </div>
+          <input type="hidden" id="d-calc" value="0">
+        </div>
+        <div class="form-group">
+          <label>TSH Risk Level</label>
+          <input type="number" id="d-tsh" value="3.1" min="0" step="0.1">
+        </div>
+        <div class="form-group">
+          <label>TPOAb Probability</label>
+          <div class="range-wrap">
+            <input type="range" id="d-tpoab" min="0" max="1" step="0.01" value="0.25"
+              oninput="document.getElementById('d-tpoab-v').textContent=parseFloat(this.value).toFixed(2)">
+            <span class="range-val" id="d-tpoab-v">0.25</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Shape Score</label>
+          <div class="range-wrap">
+            <input type="range" id="d-shape" min="0" max="1" step="0.01" value="0.72"
+              oninput="document.getElementById('d-shape-v').textContent=parseFloat(this.value).toFixed(2)">
+            <span class="range-val" id="d-shape-v">0.72</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Margin Sharpness</label>
+          <div class="range-wrap">
+            <input type="range" id="d-margin" min="0" max="1" step="0.01" value="0.65"
+              oninput="document.getElementById('d-margin-v').textContent=parseFloat(this.value).toFixed(2)">
+            <span class="range-val" id="d-margin-v">0.65</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Echogenicity Index</label>
+          <div class="range-wrap">
+            <input type="range" id="d-echo" min="0" max="1" step="0.01" value="0.55"
+              oninput="document.getElementById('d-echo-v').textContent=parseFloat(this.value).toFixed(2)">
+            <span class="range-val" id="d-echo-v">0.55</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Vascularity Score</label>
+          <div class="range-wrap">
+            <input type="range" id="d-vasc" min="0" max="1" step="0.01" value="0.48"
+              oninput="document.getElementById('d-vasc-v').textContent=parseFloat(this.value).toFixed(2)">
+            <span class="range-val" id="d-vasc-v">0.48</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Texture Entropy</label>
+          <div class="range-wrap">
+            <input type="range" id="d-tex" min="0" max="5" step="0.01" value="2.3"
+              oninput="document.getElementById('d-tex-v').textContent=parseFloat(this.value).toFixed(2)">
+            <span class="range-val" id="d-tex-v">2.30</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Asymmetry Score</label>
+          <div class="range-wrap">
+            <input type="range" id="d-asym" min="0" max="1" step="0.01" value="0.35"
+              oninput="document.getElementById('d-asym-v').textContent=parseFloat(this.value).toFixed(2)">
+            <span class="range-val" id="d-asym-v">0.35</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Capsular Invasion</label>
+          <div class="range-wrap">
+            <input type="range" id="d-cap" min="0" max="1" step="0.01" value="0.2"
+              oninput="document.getElementById('d-cap-v').textContent=parseFloat(this.value).toFixed(2)">
+            <span class="range-val" id="d-cap-v">0.20</span>
+          </div>
+        </div>
+      </div>
+
+      <button class="submit-btn" id="d-btn" onclick="runDetection()">
+        Run Detection Analysis
+      </button>
+      <div class="error-banner" id="d-error"></div>
+    </div>
+
+    <div class="result-card" id="d-result">
+      <div class="result-header">
+        <div class="result-icon" id="d-r-icon">🔬</div>
+        <div>
+          <div class="result-label" id="d-r-label">—</div>
+          <div class="result-sub">Nodule Classification</div>
+        </div>
+      </div>
+      <div class="conf-row">
+        <div class="conf-label">Confidence</div>
+        <div class="conf-bar-wrap"><div class="conf-bar high" id="d-r-bar" style="width:0%"></div></div>
+        <div class="conf-pct" id="d-r-pct"></div>
+      </div>
+      <div class="prob-grid">
+        <div class="prob-item">
+          <div class="prob-key">P(Benign)</div>
+          <div class="prob-val" id="d-r-benign">—</div>
+        </div>
+        <div class="prob-item">
+          <div class="prob-key">P(Malignant)</div>
+          <div class="prob-val" id="d-r-malig">—</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ MODULE 2 ══ -->
+  <div class="panel" id="panel-1">
+    <div class="card">
+      <div class="card-title">Cancer Stage Prediction</div>
+      <div class="card-subtitle">TNM classification · Stage I–IVB</div>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Age</label>
+          <input type="number" id="s-age" value="52" min="0" max="120">
+        </div>
+        <div class="form-group">
+          <label>Gender</label>
+          <div class="toggle-group">
+            <button class="toggle-btn" onclick="setToggle('s-gender','F',this)">Female</button>
+            <button class="toggle-btn active" onclick="setToggle('s-gender','M',this)">Male</button>
+          </div>
+          <input type="hidden" id="s-gender" value="M">
+        </div>
+        <div class="form-group">
+          <label>Smoking</label>
+          <div class="toggle-group">
+            <button class="toggle-btn active" onclick="setToggle('s-smoking','No',this)">No</button>
+            <button class="toggle-btn" onclick="setToggle('s-smoking','Yes',this)">Yes</button>
+          </div>
+          <input type="hidden" id="s-smoking" value="No">
+        </div>
+        <div class="form-group">
+          <label>History of Smoking</label>
+          <div class="toggle-group">
+            <button class="toggle-btn" onclick="setToggle('s-hx-smoking','No',this)">No</button>
+            <button class="toggle-btn active" onclick="setToggle('s-hx-smoking','Yes',this)">Yes</button>
+          </div>
+          <input type="hidden" id="s-hx-smoking" value="Yes">
+        </div>
+        <div class="form-group">
+          <label>Hx Radiotherapy</label>
+          <div class="toggle-group">
+            <button class="toggle-btn active" onclick="setToggle('s-hx-rad','No',this)">No</button>
+            <button class="toggle-btn" onclick="setToggle('s-hx-rad','Yes',this)">Yes</button>
+          </div>
+          <input type="hidden" id="s-hx-rad" value="No">
+        </div>
+        <div class="form-group">
+          <label>Thyroid Function</label>
+          <select id="s-thyroid">
+            <option value="Euthyroid" selected>Euthyroid</option>
+            <option value="Clinical Hypothyroidism">Clinical Hypothyroidism</option>
+            <option value="Clinical Hyperthyroidism">Clinical Hyperthyroidism</option>
+            <option value="Subclinical Hypothyroidism">Subclinical Hypothyroidism</option>
+            <option value="Subclinical Hyperthyroidism">Subclinical Hyperthyroidism</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Physical Examination</label>
+          <select id="s-phys">
+            <option value="Single nodular goiter-right" selected>Single nodular goiter-right</option>
+            <option value="Single nodular goiter-left">Single nodular goiter-left</option>
+            <option value="Multinodular goiter">Multinodular goiter</option>
+            <option value="Diffuse goiter">Diffuse goiter</option>
+            <option value="Normal">Normal</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Adenopathy</label>
+          <select id="s-adeno">
+            <option value="No" selected>No</option>
+            <option value="Left">Left</option>
+            <option value="Right">Right</option>
+            <option value="Bilateral">Bilateral</option>
+            <option value="Extensive">Extensive</option>
+            <option value="Posterior">Posterior</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Pathology</label>
+          <select id="s-path">
+            <option value="Papillary" selected>Papillary</option>
+            <option value="Follicular">Follicular</option>
+            <option value="Micropapillary">Micropapillary</option>
+            <option value="Hurthel cell">Hurthel cell</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Focality</label>
+          <div class="toggle-group">
+            <button class="toggle-btn active" onclick="setToggle('s-foc','Uni-Focal',this)">Uni-Focal</button>
+            <button class="toggle-btn" onclick="setToggle('s-foc','Multi-Focal',this)">Multi-Focal</button>
+          </div>
+          <input type="hidden" id="s-foc" value="Uni-Focal">
+        </div>
+        <div class="form-group">
+          <label>Risk</label>
+          <div class="toggle-group">
+            <button class="toggle-btn" onclick="setToggle('s-risk','Low',this)">Low</button>
+            <button class="toggle-btn active" onclick="setToggle('s-risk','Intermediate',this)">Intermediate</button>
+            <button class="toggle-btn" onclick="setToggle('s-risk','High',this)">High</button>
+          </div>
+          <input type="hidden" id="s-risk" value="Intermediate">
+        </div>
+        <div class="form-group">
+          <label>T Stage</label>
+          <select id="s-t">
+            <option>T1a</option><option>T1b</option><option value="T2" selected>T2</option>
+            <option>T3a</option><option>T3b</option><option>T4a</option><option>T4b</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>N Stage</label>
+          <select id="s-n">
+            <option value="N0" selected>N0</option><option>N1a</option><option>N1b</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>M Stage</label>
+          <div class="toggle-group">
+            <button class="toggle-btn active" onclick="setToggle('s-m','M0',this)">M0</button>
+            <button class="toggle-btn" onclick="setToggle('s-m','M1',this)">M1</button>
+          </div>
+          <input type="hidden" id="s-m" value="M0">
+        </div>
+        <div class="form-group">
+          <label>Treatment Response</label>
+          <select id="s-resp">
+            <option value="Excellent" selected>Excellent</option>
+            <option value="Indeterminate">Indeterminate</option>
+            <option value="Biochemical Incomplete">Biochemical Incomplete</option>
+            <option value="Structural Incomplete">Structural Incomplete</option>
+            <option value="Recurred">Recurred</option>
+          </select>
+        </div>
+      </div>
+
+      <button class="submit-btn" id="s-btn" onclick="runStaging()">
+        Predict Cancer Stage
+      </button>
+      <div class="error-banner" id="s-error"></div>
+    </div>
+
+    <div class="result-card" id="s-result">
+      <div class="result-header">
+        <div class="result-icon stage">📊</div>
+        <div>
+          <div class="result-label stage" id="s-r-label">—</div>
+          <div class="result-sub">Cancer Stage</div>
+        </div>
+      </div>
+      <div class="conf-row">
+        <div class="conf-label">Confidence</div>
+        <div class="conf-bar-wrap"><div class="conf-bar mid" id="s-r-bar" style="width:0%"></div></div>
+        <div class="conf-pct" id="s-r-pct"></div>
+      </div>
+      <div class="conf-label" style="margin-top:20px;margin-bottom:10px;">Stage Distribution</div>
+      <div class="stage-pills" id="s-r-pills"></div>
+    </div>
+  </div>
+
+  <!-- ══ MODULE 3 ══ -->
+  <div class="panel" id="panel-2">
+    <div class="card">
+      <div class="card-title">Metastasis Prediction</div>
+      <div class="card-subtitle">Distant metastasis · M0 vs M1</div>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Age</label>
+          <input type="number" id="m-age" value="61" min="0" max="120">
+        </div>
+        <div class="form-group">
+          <label>Gender</label>
+          <div class="toggle-group">
+            <button class="toggle-btn active" onclick="setToggle('m-gender','F',this)">Female</button>
+            <button class="toggle-btn" onclick="setToggle('m-gender','M',this)">Male</button>
+          </div>
+          <input type="hidden" id="m-gender" value="F">
+        </div>
+        <div class="form-group">
+          <label>Smoking</label>
+          <div class="toggle-group">
+            <button class="toggle-btn" onclick="setToggle('m-smoking','No',this)">No</button>
+            <button class="toggle-btn active" onclick="setToggle('m-smoking','Yes',this)">Yes</button>
+          </div>
+          <input type="hidden" id="m-smoking" value="Yes">
+        </div>
+        <div class="form-group">
+          <label>History of Smoking</label>
+          <div class="toggle-group">
+            <button class="toggle-btn active" onclick="setToggle('m-hx-smoking','No',this)">No</button>
+            <button class="toggle-btn" onclick="setToggle('m-hx-smoking','Yes',this)">Yes</button>
+          </div>
+          <input type="hidden" id="m-hx-smoking" value="No">
+        </div>
+        <div class="form-group">
+          <label>Hx Radiotherapy</label>
+          <div class="toggle-group">
+            <button class="toggle-btn" onclick="setToggle('m-hx-rad','No',this)">No</button>
+            <button class="toggle-btn active" onclick="setToggle('m-hx-rad','Yes',this)">Yes</button>
+          </div>
+          <input type="hidden" id="m-hx-rad" value="Yes">
+        </div>
+        <div class="form-group">
+          <label>Thyroid Function</label>
+          <select id="m-thyroid">
+            <option>Euthyroid</option>
+            <option value="Clinical Hypothyroidism" selected>Clinical Hypothyroidism</option>
+            <option value="Clinical Hyperthyroidism">Clinical Hyperthyroidism</option>
+            <option value="Subclinical Hypothyroidism">Subclinical Hypothyroidism</option>
+            <option value="Subclinical Hyperthyroidism">Subclinical Hyperthyroidism</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Physical Examination</label>
+          <select id="m-phys">
+            <option>Single nodular goiter-right</option>
+            <option>Single nodular goiter-left</option>
+            <option value="Multinodular goiter" selected>Multinodular goiter</option>
+            <option>Diffuse goiter</option>
+            <option>Normal</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Adenopathy</label>
+          <select id="m-adeno">
+            <option>No</option><option>Left</option><option>Right</option>
+            <option value="Bilateral" selected>Bilateral</option>
+            <option>Extensive</option><option>Posterior</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Pathology</label>
+          <select id="m-path">
+            <option value="Follicular" selected>Follicular</option>
+            <option>Papillary</option>
+            <option>Micropapillary</option>
+            <option>Hurthel cell</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Focality</label>
+          <div class="toggle-group">
+            <button class="toggle-btn" onclick="setToggle('m-foc','Uni-Focal',this)">Uni-Focal</button>
+            <button class="toggle-btn active" onclick="setToggle('m-foc','Multi-Focal',this)">Multi-Focal</button>
+          </div>
+          <input type="hidden" id="m-foc" value="Multi-Focal">
+        </div>
+        <div class="form-group">
+          <label>Risk</label>
+          <div class="toggle-group">
+            <button class="toggle-btn" onclick="setToggle('m-risk','Low',this)">Low</button>
+            <button class="toggle-btn" onclick="setToggle('m-risk','Intermediate',this)">Intermediate</button>
+            <button class="toggle-btn active" onclick="setToggle('m-risk','High',this)">High</button>
+          </div>
+          <input type="hidden" id="m-risk" value="High">
+        </div>
+        <div class="form-group">
+          <label>T Stage</label>
+          <select id="m-t">
+            <option>T1a</option><option>T1b</option><option>T2</option>
+            <option>T3a</option><option>T3b</option>
+            <option value="T4a" selected>T4a</option><option>T4b</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>N Stage</label>
+          <select id="m-n">
+            <option>N0</option><option>N1a</option><option value="N1b" selected>N1b</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Treatment Response</label>
+          <select id="m-resp">
+            <option>Excellent</option>
+            <option>Indeterminate</option>
+            <option>Biochemical Incomplete</option>
+            <option value="Structural Incomplete" selected>Structural Incomplete</option>
+            <option>Recurred</option>
+          </select>
+        </div>
+      </div>
+
+      <button class="submit-btn" id="m-btn" onclick="runMetastasis()">
+        Predict Metastasis
+      </button>
+      <div class="error-banner" id="m-error"></div>
+    </div>
+
+    <div class="result-card" id="m-result">
+      <div class="result-header">
+        <div class="result-icon meta">🧬</div>
+        <div>
+          <div class="result-label" id="m-r-label">—</div>
+          <div class="result-sub">Metastasis Status</div>
+        </div>
+      </div>
+      <div class="conf-row">
+        <div class="conf-label">Confidence</div>
+        <div class="conf-bar-wrap"><div class="conf-bar" id="m-r-bar" style="width:0%"></div></div>
+        <div class="conf-pct" id="m-r-pct"></div>
+      </div>
+      <div class="prob-grid">
+        <div class="prob-item">
+          <div class="prob-key">P(M0 — No Metastasis)</div>
+          <div class="prob-val" id="m-r-m0">—</div>
+        </div>
+        <div class="prob-item">
+          <div class="prob-key">P(M1 — Metastasis)</div>
+          <div class="prob-val" id="m-r-m1">—</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="disclaimer">
+    <strong>⚠ Clinical Decision Support Only</strong> — ThyroAI is an AI-assisted tool for research and educational purposes.
+    All predictions must be reviewed by a qualified medical professional before clinical use. This system does not replace
+    clinical judgment, pathological diagnosis, or established diagnostic guidelines.
+  </div>
+
+</main>
+
+<script>
+const API = '';  // Empty = same origin; change to 'http://localhost:8000' for local dev
+
+// ── Tab switching ────────────────────────────────────────────────────────────────
+function switchTab(idx) {
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===idx));
+  document.querySelectorAll('.panel').forEach((p,i) => p.classList.toggle('active', i===idx));
+}
+
+// ── Toggle helpers ───────────────────────────────────────────────────────────────
+function setToggle(id, val, btn) {
+  document.getElementById(id).value = val;
+  const group = btn.closest('.toggle-group');
+  group.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+function setToggleNum(id, val, btn) {
+  document.getElementById(id).value = val;
+  const group = btn.closest('.toggle-group');
+  group.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// ── Health check ─────────────────────────────────────────────────────────────────
+async function checkHealth() {
+  try {
+    const r = await fetch(API + '/');
+    if (r.ok) {
+      document.getElementById('statusDot').style.background = 'var(--accent)';
+      document.getElementById('statusText').textContent = 'API Online';
+    } else { throw new Error(); }
+  } catch {
+    document.getElementById('statusDot').style.background = 'var(--warn)';
+    document.getElementById('statusText').textContent = 'API Offline';
+  }
+}
+checkHealth();
+
+// ── Generic fetch helper ─────────────────────────────────────────────────────────
+async function callAPI(endpoint, body, btnId, errorId) {
+  const btn = document.getElementById(btnId);
+  const err = document.getElementById(errorId);
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>';
+  err.classList.remove('show');
+  try {
+    const r = await fetch(API + endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const data = await r.json();
+    if (!r.ok) {
+      const msg = data.detail
+        ? (Array.isArray(data.detail) ? data.detail.map(e => e.msg).join('; ') : data.detail)
+        : 'Prediction failed';
+      throw new Error(msg);
+    }
+    return data;
+  } catch (e) {
+    err.textContent = '⚠ ' + e.message;
+    err.classList.add('show');
+    return null;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = btn.id === 'd-btn' ? 'Run Detection Analysis'
+      : btn.id === 's-btn' ? 'Predict Cancer Stage' : 'Predict Metastasis';
+  }
+}
+
+function pct(v) { return (v * 100).toFixed(1) + '%'; }
+
+// ── Module 1 ─────────────────────────────────────────────────────────────────────
+async function runDetection() {
+  const body = {
+    age: +document.getElementById('d-age').value,
+    gender: document.getElementById('d-gender').value,
+    family_history: +document.getElementById('d-family').value,
+    radiation_exposure: +document.getElementById('d-rad').value,
+    nodule_size_mm: +document.getElementById('d-nodule').value,
+    calcification_presence: +document.getElementById('d-calc').value,
+    tsh_risk_level: +document.getElementById('d-tsh').value,
+    tpoab_probability: +document.getElementById('d-tpoab').value,
+    shape_score: +document.getElementById('d-shape').value,
+    margin_sharpness: +document.getElementById('d-margin').value,
+    echogenicity_index: +document.getElementById('d-echo').value,
+    vascularity_score: +document.getElementById('d-vasc').value,
+    texture_entropy: +document.getElementById('d-tex').value,
+    asymmetry_score: +document.getElementById('d-asym').value,
+    capsular_invasion: +document.getElementById('d-cap').value,
+  };
+  const data = await callAPI('/predict/detection', body, 'd-btn', 'd-error');
+  if (!data) return;
+
+  const isM = data.prediction === 'Malignant';
+  const rc = document.getElementById('d-result');
+  rc.classList.add('show');
+
+  document.getElementById('d-r-icon').className = 'result-icon ' + (isM ? 'malignant' : 'benign');
+  document.getElementById('d-r-icon').textContent = isM ? '⚠' : '✓';
+  const lbl = document.getElementById('d-r-label');
+  lbl.textContent = data.prediction;
+  lbl.className = 'result-label ' + (isM ? 'malignant' : 'benign');
+
+  const bar = document.getElementById('d-r-bar');
+  bar.className = 'conf-bar ' + (data.confidence > .8 ? 'high' : data.confidence > .6 ? 'mid' : 'low');
+  setTimeout(() => bar.style.width = pct(data.confidence), 50);
+  document.getElementById('d-r-pct').textContent = pct(data.confidence) + ' confidence';
+  document.getElementById('d-r-benign').textContent = pct(data.probability_benign);
+  document.getElementById('d-r-malig').textContent = pct(data.probability_malignant);
+}
+
+// ── Module 2 ─────────────────────────────────────────────────────────────────────
+async function runStaging() {
+  const body = {
+    age: +document.getElementById('s-age').value,
+    gender: document.getElementById('s-gender').value,
+    smoking: document.getElementById('s-smoking').value,
+    hx_smoking: document.getElementById('s-hx-smoking').value,
+    hx_radiotherapy: document.getElementById('s-hx-rad').value,
+    thyroid_function: document.getElementById('s-thyroid').value,
+    physical_examination: document.getElementById('s-phys').value,
+    adenopathy: document.getElementById('s-adeno').value,
+    pathology: document.getElementById('s-path').value,
+    focality: document.getElementById('s-foc').value,
+    risk: document.getElementById('s-risk').value,
+    t: document.getElementById('s-t').value,
+    n: document.getElementById('s-n').value,
+    m: document.getElementById('s-m').value,
+    response: document.getElementById('s-resp').value,
+  };
+  const data = await callAPI('/predict/staging', body, 's-btn', 's-error');
+  if (!data) return;
+
+  document.getElementById('s-result').classList.add('show');
+  const lbl = document.getElementById('s-r-label');
+  lbl.textContent = 'Stage ' + data.stage;
+  lbl.className = 'result-label stage';
+
+  const bar = document.getElementById('s-r-bar');
+  setTimeout(() => bar.style.width = pct(data.confidence), 50);
+  document.getElementById('s-r-pct').textContent = pct(data.confidence) + ' confidence';
+
+  const pills = document.getElementById('s-r-pills');
+  pills.innerHTML = '';
+  Object.entries(data.probabilities).forEach(([stage, prob]) => {
+    const p = document.createElement('div');
+    p.className = 'stage-pill' + (stage === data.stage ? ' active-stage' : '');
+    p.textContent = `Stage ${stage}: ${pct(prob)}`;
+    pills.appendChild(p);
+  });
+}
+
+// ── Module 3 ─────────────────────────────────────────────────────────────────────
+async function runMetastasis() {
+  const body = {
+    age: +document.getElementById('m-age').value,
+    gender: document.getElementById('m-gender').value,
+    smoking: document.getElementById('m-smoking').value,
+    hx_smoking: document.getElementById('m-hx-smoking').value,
+    hx_radiotherapy: document.getElementById('m-hx-rad').value,
+    thyroid_function: document.getElementById('m-thyroid').value,
+    physical_examination: document.getElementById('m-phys').value,
+    adenopathy: document.getElementById('m-adeno').value,
+    pathology: document.getElementById('m-path').value,
+    focality: document.getElementById('m-foc').value,
+    risk: document.getElementById('m-risk').value,
+    t: document.getElementById('m-t').value,
+    n: document.getElementById('m-n').value,
+    response: document.getElementById('m-resp').value,
+  };
+  const data = await callAPI('/predict/metastasis', body, 'm-btn', 'm-error');
+  if (!data) return;
+
+  const hasM = data.has_metastasis;
+  document.getElementById('m-result').classList.add('show');
+
+  const lbl = document.getElementById('m-r-label');
+  lbl.textContent = hasM ? 'M1 — Metastasis Detected' : 'M0 — No Metastasis';
+  lbl.className = 'result-label ' + (hasM ? 'has-meta' : 'no-meta');
+
+  const bar = document.getElementById('m-r-bar');
+  bar.className = 'conf-bar ' + (hasM ? 'low' : 'high');
+  setTimeout(() => bar.style.width = pct(data.confidence), 50);
+  document.getElementById('m-r-pct').textContent = pct(data.confidence) + ' confidence';
+  document.getElementById('m-r-m0').textContent = pct(data.probability_M0);
+  document.getElementById('m-r-m1').textContent = pct(data.probability_M1);
+}
+</script>
+</body>
+</html>
