@@ -42,15 +42,24 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Serve static files (Web UI) if folder exists
+# Serve static files if a "static" folder exists
 static_dir = Path(__file__).parent / "static"
 if static_dir.exists():
     app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
 
 
-# ── Health check ──────────────────────────────────────────────────────────────────
+# ── Web UI (main link) and health check ───────────────────────────────────────────
 
-@app.get("/", response_model=HealthResponse, tags=["Health"])
+@app.get("/", include_in_schema=False)
+def serve_ui():
+    """Serve the Web UI at the main link."""
+    ui_path = Path(__file__).parent / "index.html"
+    if not ui_path.exists():
+        raise HTTPException(404, "UI not found")
+    return FileResponse(str(ui_path))
+
+
+@app.get("/health", response_model=HealthResponse, tags=["Health"])
 def health():
     """API health check and version info."""
     return {
@@ -58,14 +67,6 @@ def health():
         "version": "1.0.0",
         "modules": ["detection", "staging", "metastasis"],
     }
-
-@app.get("/ui", include_in_schema=False)
-def serve_ui():
-    """Serve the Web UI."""
-    ui_path = Path(__file__).parent / "static" / "index.html"
-    if not ui_path.exists():
-        raise HTTPException(404, "UI not found")
-    return FileResponse(str(ui_path))
 
 
 # ── Module 1 – Detection ──────────────────────────────────────────────────────────
