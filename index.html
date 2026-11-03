@@ -937,7 +937,7 @@ function setToggleNum(id, val, btn) {
 // ── Health check ─────────────────────────────────────────────────────────────────
 async function checkHealth() {
   try {
-    const r = await fetch(API + '/');
+    const r = await fetch(API + '/health');
     if (r.ok) {
       document.getElementById('statusDot').style.background = 'var(--accent)';
       document.getElementById('statusText').textContent = 'API Online';
